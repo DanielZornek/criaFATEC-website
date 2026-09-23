@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cria FATEC - Vitrine de Portfólios & Eventos</title>
+  <link rel="stylesheet" href="src/css/style.css">
+  <!-- Supabase JS Client via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- CABEÇALHO / NAVBAR -->
+  <header class="navbar container">
+    <div class="nav-brand" onclick="window.navegarPara('/')" style="cursor: pointer;">
+      <h1>Cria <span>FATEC</span></h1>
+      <p>Vitrine de Portfólios & Eventos</p>
+    </div>
+    <div id="user-area" class="user-area">
+      <!-- Preenchido via JS (Sessão do Usuário) -->
+    </div>
+  </header>
+
+  <!-- CARROSSEL HERO (DESTAQUES) -->
+  <section class="hero-carousel-container container">
+    <div class="carousel-wrapper" id="carousel-wrapper">
+      <!-- Slide 1 -->
+      <div class="carousel-slide active" style="background: linear-gradient(135deg, #ba3f1d, #2b0b02);">
+        <div class="slide-content">
+          <span class="badge-hero">🚀 Projeto Acadêmico</span>
+          <h2>Mostre ao mundo o seu talento na FATEC!</h2>
+          <p>Publique artes, jogos, trilhas sonoras, código e portfólios desenvolvidos durante o curso.</p>
+          <button class="btn-hero" onclick="window.abrirModalPost()">+ Publicar Meu Trabalho</button>
+        </div>
+      </div>
+      <!-- Slide 2 -->
+      <div class="carousel-slide" style="background: linear-gradient(135deg, #2b5278, #0f1c29);">
+        <div class="slide-content">
+          <span class="badge-hero">🎨 Arte & Design</span>
+          <h2>Jogos, Pixel Art & Animações</h2>
+          <p>Explore a produção dos alunos de Desenvolvimento de Software Multiplataforma e áreas criativas.</p>
+          <button class="btn-hero" onclick="window.navegarPara('/')">Explorar Galeria</button>
+        </div>
+      </div>
+      <!-- Slide 3 -->
+      <div class="carousel-slide" style="background: linear-gradient(135deg, #3d2b78, #160e2e);">
+        <div class="slide-content">
+          <span class="badge-hero">📅 Eventos & Hackathons</span>
+          <h2>Fique por dentro das feiras e maratonas</h2>
+          <p>Acompanhe datas de entregas de TCC, semanas de tecnologia e encontros da comunidade.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles do Carrossel -->
+    <button class="carousel-control prev" onclick="mudarSlide(-1)">&#10094;</button>
+    <button class="carousel-control next" onclick="mudarSlide(1)">&#10095;</button>
+
+    <!-- Indicadores/Pontos -->
+    <div class="carousel-indicators">
+      <span class="dot active" onclick="irParaSlide(0)"></span>
+      <span class="dot" onclick="irParaSlide(1)"></span>
+      <span class="dot" onclick="irParaSlide(2)"></span>
+    </div>
+  </section>
+
+  <!-- BARRA DE MÉTRICAS RÁPIDAS -->
+<!-- BARRA DE MÉTRICAS RÁPIDAS -->
+  <section class="stats-bar container">
+    <div class="stat-item">
+      <h3 id="stat-total-posts">...</h3>
+      <p>Projetos Criativos</p>
+    </div>
+    <div class="stat-item">
+      <h3>100%</h3>
+      <p>Desenvolvimento Aluno</p>
+    </div>
+    <div class="stat-item">
+      <h3>FATEC</h3>
+      <p>Praia Grande & Baixada</p>
+    </div>
+  </section>
+
+  <!-- O SPA vai trocar o conteúdo de dentro deste <main> (Feed / Perfil / Login) -->
+  <main id="app" class="container">
+    <p class="loading">A carregar...</p>
+  </main>
+
+  <!-- SEÇÃO DE CATEGORIAS DE CURSOS (ABAIXO DO CONTEÚDO) -->
+  <section class="categories-section container">
+    <h2>Áreas & Cursos em Destaque</h2>
+    <div class="categories-grid">
+      <div class="category-card">
+        <span class="cat-icon">💻</span>
+        <h3>DSM / ADS</h3>
+        <p>Sistemas web, mobile, APIs, UI/UX e engenharia de software.</p>
+      </div>
+      <div class="category-card">
+        <span class="cat-icon">🎮</span>
+        <h3>Jogos Digitais</h3>
+        <p>Asset design, pixel art, trilhas sonoras e mecânicas no BeepBox/Unity.</p>
+      </div>
+      <div class="category-card">
+        <span class="cat-icon">🎨</span>
+        <h3>Design & Mídia</h3>
+        <p>Ilustrações, modelos 3D, áudios autorais e identidade visual.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RODAPÉ (FOOTER) -->
+  <footer class="main-footer">
+    <div class="footer-container container">
+      <div class="footer-brand">
+        <h2>Cria <span>FATEC</span></h2>
+        <p>A plataforma de conexão entre os talentos criativos, estudantes e o mercado de tecnologia da FATEC.</p>
+      </div>
+
+      <div class="footer-links">
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="#" onclick="window.navegarPara('/')">Galeria de Trabalhos</a></li>
+          <li><a href="#" onclick="window.navegarPara('/perfil')">Meu Perfil / Dashboard</a></li>
+          <li><a href="#" onclick="window.abrirModalPost()">Publicar Mídia</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-info">
+        <h4>Institucional</h4>
+        <p>Desenvolvido para fins acadêmicos e integração dos cursos de tecnologia.</p>
+        <p class="copyright">&copy; 2026 Cria FATEC. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal de Criar Post -->
+  <div id="modal-post" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Criar Nova Publicação</h2>
+        <button class="btn-close" onclick="fecharModalPost()">&times;</button>
+      </div>
+
+      <form id="form-criar-post">
+        <div class="form-group">
+          <label>Título do Trabalho *</label>
+          <input type="text" id="post-titulo" required placeholder="Ex: Ilustração Digital - Concept Art">
+        </div>
+
+        <div class="form-group">
+          <label>Descrição / Detalhes</label>
+          <textarea id="post-descricao" rows="3" placeholder="Fale um pouco sobre as ferramentas usadas e o processo de criação..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Arquivo de Mídia (Imagem, Vídeo ou Áudio) *</label>
+          <input type="file" id="post-midia" accept="image/*,video/*,audio/*" required>
+        </div>
+
+        <button type="submit" id="btn-publicar" class="btn-primary">Publicar no Feed</button>
+        <p id="mensagem-status-post" class="status-msg"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para ver Post Ampliado -->
+  <div id="modal-post-detalhes" class="modal-overlay" onclick="fecharModalDetalhes(event)">
+    <div class="modal-content modal-large">
+      <button class="btn-close" onclick="fecharModalDetalhes()">&times;</button>
+      <div id="modal-post-conteudo">
+        <!-- Conteúdo do post injetado via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- LÓGICA DO CARROSSEL DE BANNERS -->
+  <script>
+    let currentSlide = 0;
+    const slides = document.getElementsByClassName("carousel-slide");
+    const dots = document.getElementsByClassName("dot");
+
+    function mostrarSlide(index) {
+      if (!slides || slides.length === 0) return;
+      if (index >= slides.length) currentSlide = 0;
+      else if (index < 0) currentSlide = slides.length - 1;
+      else currentSlide = index;
+
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("active");
+        if (dots[i]) dots[i].classList.remove("active");
+      }
+
+      slides[currentSlide].classList.add("active");
+      if (dots[currentSlide]) dots[currentSlide].classList.add("active");
+    }
+
+    function mudarSlide(step) {
+      mostrarSlide(currentSlide + step);
+    }
+
+    function irParaSlide(index) {
+      mostrarSlide(index);
+    }
+
+    // Auto-play do carrossel a cada 5 segundos
+    setInterval(() => {
+      mudarSlide(1);
+    }, 5000);
+  </script>
+
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>

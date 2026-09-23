@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cria FATEC - Cadastro de Aluno</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Criar Perfil no <span>Cria FATEC</span></h2>
+
+    <form id="cadastro-form">
+      <!-- Credenciais da Conta -->
+      <div class="form-group">
+        <label>E-mail institucional / pessoal *</label>
+        <input type="email" id="email" required placeholder="seuemail@fatec.sp.gov.br">
+      </div>
+
+      <div class="form-group">
+        <label>Senha *</label>
+        <input type="password" id="senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+      </div>
+
+      <hr class="divider">
+
+      <!-- Informações do Perfil -->
+      <div class="form-group">
+        <label>Nome Completo *</label>
+        <input type="text" id="nome" required placeholder="Ex: Daniel Zornek">
+      </div>
+
+      <div class="form-group">
+        <label>Nome de Usuário (@username) *</label>
+        <input type="text" id="username" required placeholder="Ex: danielzornek">
+      </div>
+
+      <div class="form-group">
+        <label>Nome Artístico (Opcional)</label>
+        <input type="text" id="nome_artistico" placeholder="Ex: Zornek Art">
+      </div>
+
+      <div class="form-group">
+        <label>Bio / Apresentação</label>
+        <textarea id="bio" rows="3" placeholder="Conte um pouco sobre seu trabalho artístico..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Habilidades (separadas por vírgula)</label>
+        <input type="text" id="habilidades" placeholder="Ex: Ilustração, Pixel Art, UI/UX, Modelagem 3D">
+      </div>
+
+      <div class="form-group">
+        <label>Foto de Perfil (Avatar)</label>
+        <input type="file" id="avatar" accept="image/*">
+      </div>
+
+      <button type="submit" id="btn-cadastrar" class="btn-primary">Criar Conta e Perfil</button>
+      <p id="mensagem-status" class="status-msg"></p>
+    </form>
+
+    <p class="login-link"><a href="index.html">← Voltar para o Feed</a></p>
+  </div>
+
+  <script src="cadastro.js"></script>
+</body>
+</html>

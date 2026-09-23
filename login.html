@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cria FATEC - Login</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<header class="navbar">
+    <div class="nav-brand">
+      <h1>Cria <span>FATEC</span></h1>
+      <p>Vitrine de Portfólios & Eventos</p>
+    </div>
+    <div id="user-area" class="user-area">
+      <!-- Será preenchido via JS conforme a sessão (Login ou Perfil/Sair) -->
+    </div>
+  </header>
+<body>
+  <div class="auth-container">
+    <h2>Entrar no <span>Cria FATEC</span></h2>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label>E-mail *</label>
+        <input type="email" id="email" required placeholder="seuemail@fatec.sp.gov.br">
+      </div>
+
+      <div class="form-group">
+        <label>Senha *</label>
+        <input type="password" id="senha" required placeholder="Sua senha">
+      </div>
+
+      <button type="submit" id="btn-login" class="btn-primary">Entrar</button>
+      <p id="mensagem-status" class="status-msg"></p>
+    </form>
+
+    <p class="login-link">
+      Ainda não tem conta? <a href="cadastro.html">Cadastre-se aqui</a>
+    </p>
+    <p class="login-link">
+      <a href="index.html">← Voltar para o Feed</a>
+    </p>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>
