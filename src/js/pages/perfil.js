@@ -100,7 +100,7 @@ export async function renderPerfilPage() {
         </div>
       </div>
 
-      <!-- SEÇÕES DE TRABALHOS E PROJETOS -->
+      <!-- SEÇÕES DE TRABALHOS E POSTS -->
       <div style="margin-top: 30px;">
         <h2 style="border-bottom: 2px solid #22262B; padding-bottom: 10px; color: #279AF1;">🎨 Galeria de Trabalhos & Posts</h2>
         <div id="userPostsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
@@ -118,18 +118,17 @@ export async function renderPerfilPage() {
     </div>
   `;
 
-  // Evento do botão compartilhar para gerar a URL correta baseada em hash
+  // Evento do botão compartilhar corrigido para gerar a URL limpa baseada em hash
   document.getElementById('btnSharePortfolio')?.addEventListener('click', () => {
-    let cleanPath = window.location.pathname;
-    if (cleanPath.endsWith('.html')) {
-      cleanPath = cleanPath.substring(0, cleanPath.lastIndexOf('/') + 1);
-    } else if (!cleanPath.endsWith('/')) {
-      cleanPath += '/';
-    }
-
-    const shareUrl = `${window.location.origin}${cleanPath}#perfil?username=${profile.username}`;
-    navigator.clipboard.writeText(shareUrl);
-    alert(`Link do portfólio copiado:\n${shareUrl}`);
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}#perfil?username=${profile.username}`;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert(`Link do portfólio copiado com sucesso!\n${shareUrl}`);
+    }).catch(err => {
+      console.error('Erro ao copiar link: ', err);
+      prompt("Copie o link abaixo:", shareUrl);
+    });
   });
 
   // Carrega mídias e projetos do usuário

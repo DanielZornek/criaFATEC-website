@@ -45,7 +45,7 @@ export async function rotear() {
     void app.offsetWidth;
   }
 
-  // Oculta carrossel, métricas e categorias em telas secundárias
+  // Verifica se é tela secundária (considerando hash que começa com #perfil, mesmo com parâmetros)
   const ehTelaSecundaria = hash.startsWith('#perfil') || 
                            hash.startsWith('#login') || 
                            hash.startsWith('#cadastro') ||
@@ -63,7 +63,7 @@ export async function rotear() {
     if (categories) categories.style.display = 'block';
   }
 
-  // Executa a renderização de cada página
+  // Executa a renderização de cada página de forma robusta
   if (hash.startsWith('#perfil')) {
     await renderizarPerfil();
   } else if (hash.startsWith('#login') || path === '/login') {
