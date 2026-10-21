@@ -9,6 +9,14 @@ export function navegarPara(path) {
     window.location.hash = path.replace('/perfil', '#perfil');
     return;
   }
+  if (path.startsWith('/login')) {
+    window.location.hash = '#login';
+    return;
+  }
+  if (path.startsWith('/cadastro')) {
+    window.location.hash = '#cadastro';
+    return;
+  }
   window.history.pushState({}, '', path);
   rotear();
 }
@@ -24,11 +32,12 @@ export async function rotear() {
   const path = window.location.pathname;
   const app = document.getElementById('app');
 
-  // Seleciona as seções fixas do index.html para controlar visibilidade
+  // Elementos do index.html que devem sumir fora do feed
   const carousel = document.querySelector('.hero-carousel-container');
   const stats = document.querySelector('.stats-bar');
   const categories = document.querySelector('.categories-section');
 
+  // Atualiza estado do usuário na navbar
   await verificarSessao();
 
   if (app) {
@@ -36,24 +45,30 @@ export async function rotear() {
     void app.offsetWidth;
   }
 
-  // Se estiver no PERFIL, LOGIN ou CADASTRO -> ESCONDE o carrossel, métricas e categorias
-  if (hash.startsWith('#perfil') || hash.startsWith('#login') || hash.startsWith('#cadastro')) {
+  // Oculta carrossel, métricas e categorias em telas secundárias
+  const ehTelaSecundaria = hash.startsWith('#perfil') || 
+                           hash.startsWith('#login') || 
+                           hash.startsWith('#cadastro') ||
+                           path === '/login' || 
+                           path === '/cadastro' || 
+                           path === '/perfil';
+
+  if (ehTelaSecundaria) {
     if (carousel) carousel.style.display = 'none';
     if (stats) stats.style.display = 'none';
     if (categories) categories.style.display = 'none';
   } else {
-    // Se estiver no FEED (Página inicial) -> EXIBE novamente
     if (carousel) carousel.style.display = 'block';
     if (stats) stats.style.display = 'flex';
     if (categories) categories.style.display = 'block';
   }
 
-  // Roteamento
+  // Executa a renderização de cada página
   if (hash.startsWith('#perfil')) {
     await renderizarPerfil();
-  } else if (hash.startsWith('#login')) {
+  } else if (hash.startsWith('#login') || path === '/login') {
     await renderizarLogin();
-  } else if (hash.startsWith('#cadastro')) {
+  } else if (hash.startsWith('#cadastro') || path === '/cadastro') {
     await renderizarCadastro();
   } else if (path === '/perfil' || path.endsWith('/perfil')) {
     window.location.replace('./#perfil');
