@@ -1,4 +1,4 @@
-import { supabaseClient } from '../supabase.js';
+import { supabase as supabaseClient } from '../supabase.js';
 
 export let postsCarregados = [];
 

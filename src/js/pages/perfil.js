@@ -1,370 +1,238 @@
-import { supabaseClient } from '../supabase.js';
-import { navegarPara } from '../router.js';
-import { verificarSessao } from '../auth.js';
-import { abrirModalDetalhes } from './postModal.js';
+// src/js/pages/perfil.js
+import { supabase } from '../supabase.js';
 
-let profileDados = null;
-let meusPosts = [];
+export async function renderPerfilPage() {
+  const container = document.getElementById('app');
+  if (!container) return;
 
-export async function renderizarPerfil() {
-  const app = document.getElementById('app');
-  app.className = 'container single-layout';
+  // Lógica para extrair o username a partir do Hash (ex: #perfil?username=escanor123)
+  const hash = window.location.hash;
+  let usernameParam = null;
 
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) {
-    navegarPara('/login');
-    return;
+  if (hash.includes('?')) {
+    const queryString = hash.split('?')[1];
+    const urlParams = new URLSearchParams(queryString);
+    usernameParam = urlParams.get('username');
   }
 
-  app.innerHTML = `<p class="loading">Carregando painel de perfil...</p>`;
-  const user = session.user;
+  let profile = null;
 
-  // Busca o perfil do usuário
-  const { data: profile, error } = await supabaseClient
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  try {
+    if (usernameParam) {
+      // Busca perfil público pelo username informado
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', usernameParam)
+        .single();
 
-  if (error || !profile) {
-    app.innerHTML = `<p class="status-msg" style="color:var(--primary)">Erro ao carregar dados do perfil.</p>`;
-    return;
-  }
+      if (error) throw error;
+      profile = data;
+    } else {
+      // Caso não haja parâmetro na URL, tenta buscar o usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
 
-  profileDados = profile;
-
-  // Renderiza a estrutura da Sidebar + Conteúdo Dinâmico
-  app.innerHTML = `
-    <div class="perfil-dashboard">
-      <!-- Sidebar / Menu Lateral -->
-      <aside class="perfil-sidebar">
-        <div class="perfil-sidebar-user">
-          ${profile.avatar_url 
-            ? `<img src="${profile.avatar_url}" class="perfil-sidebar-avatar" />` 
-            : `<div class="perfil-sidebar-avatar-placeholder"></div>`}
-          <h3>${profile.nome || 'Usuário'}</h3>
-          <span>@${profile.username || 'username'}</span>
-        </div>
-
-        <nav class="perfil-menu">
-          <button class="perfil-menu-btn active" onclick="window.trocarAbaPerfil('ver-perfil')">
-            👤 Visualizar Perfil
-          </button>
-          <button class="perfil-menu-btn" onclick="window.trocarAbaPerfil('meus-posts')">
-            🎨 Minhas Publicações
-          </button>
-          <button class="perfil-menu-btn" onclick="window.trocarAbaPerfil('editar-perfil')">
-            ⚙️ Editar Informações
-          </button>
-          <button class="perfil-menu-btn btn-danger-menu" onclick="window.trocarAbaPerfil('zona-perigo')">
-            ⚠️ Configurações da Conta
-          </button>
-        </nav>
-      </aside>
-
-      <!-- Conteúdo Principal da Aba -->
-      <main id="perfil-conteudo-aba" class="perfil-main-content">
-        <!-- O conteúdo da aba será injetado dinamicamente aqui -->
-      </main>
-    </div>
-  `;
-
-  // Expõe a função para alternar abas globalmente
-  window.trocarAbaPerfil = trocarAbaPerfil;
-
-  // Carrega a aba padrão
-  trocarAbaPerfil('ver-perfil');
-}
-
-// ----------------------------------------------------
-// GERENCIADOR DE ABAS DO PERFIL
-// ----------------------------------------------------
-export async function trocarAbaPerfil(nomeAba) {
-  const conteudosContainer = document.getElementById('perfil-conteudo-aba');
-  if (!conteudosContainer) return;
-
-  // Reinicia a animação CSS no container da aba
-  conteudosContainer.classList.remove('page-transition');
-  void conteudosContainer.offsetWidth; // Reflow
-
-  // Atualiza classe ativa nos botões do menu
-  document.querySelectorAll('.perfil-menu-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  const btnAtivo = Array.from(document.querySelectorAll('.perfil-menu-btn')).find(btn => {
-    if (nomeAba === 'ver-perfil') return btn.textContent.includes('Visualizar Perfil');
-    if (nomeAba === 'meus-posts') return btn.textContent.includes('Minhas Publicações');
-    if (nomeAba === 'editar-perfil') return btn.textContent.includes('Editar Informações');
-    if (nomeAba === 'zona-perigo') return btn.textContent.includes('Configurações da Conta');
-    return false;
-  });
-
-  if (btnAtivo) btnAtivo.classList.add('active');
-
-  // Renderiza a aba correspondente
-  if (nomeAba === 'ver-perfil') {
-    renderizarAbaVerPerfil(conteudosContainer);
-  } else if (nomeAba === 'meus-posts') {
-    await renderizarAbaMeusPosts(conteudosContainer);
-  } else if (nomeAba === 'editar-perfil') {
-    renderizarAbaEditarPerfil(conteudosContainer);
-  } else if (nomeAba === 'zona-perigo') {
-    renderizarAbaZonaPerigo(conteudosContainer);
-  }
-
-  // Aplica o efeito de animação na aba recém-carregada
-  conteudosContainer.classList.add('page-transition');
-}
-
-// 1. Aba: Ver Perfil Público
-function renderizarAbaVerPerfil(container) {
-  const p = profileDados;
-  const habilidadesBadges = p.habilidades && p.habilidades.length > 0
-    ? p.habilidades.map(h => `<span class="badge-tag">${h}</span>`).join('')
-    : '<span style="color: var(--text-muted)">Nenhuma habilidade cadastrada.</span>';
-
-  container.innerHTML = `
-    <div class="perfil-card-view">
-      <div class="perfil-header-banner"></div>
-      <div class="perfil-info-body">
-        <div class="perfil-avatar-wrapper">
-          ${p.avatar_url 
-            ? `<img src="${p.avatar_url}" class="perfil-avatar-large" />` 
-            : `<div class="perfil-avatar-large-placeholder"></div>`}
-        </div>
-
-        <h2>${p.nome || 'Sem Nome'}</h2>
-        <p class="perfil-username">@${p.username || 'username'} ${p.nome_artistico ? `• (${p.nome_artistico})` : ''}</p>
-
-        <div class="perfil-section">
-          <h4>Bio / Apresentação</h4>
-          <p>${p.bio || 'Este usuário ainda não adicionou uma biografia.'}</p>
-        </div>
-
-        <div class="perfil-section">
-          <h4>Habilidades & Áreas de Atuação</h4>
-          <div class="badges-container">
-            ${habilidadesBadges}
+      if (!user) {
+        container.innerHTML = `
+          <div style="text-align: center; color: #F5F5F5; padding: 50px;">
+            <h2>Perfil não especificado ou usuário não autenticado.</h2>
+            <p style="margin-top: 10px; color: #AAA;">
+              Utilize um link público no formato: <code>/#perfil?username=nome_usuario</code>
+            </p>
           </div>
-        </div>
+        `;
+        return;
+      }
 
-        <button class="btn-primary-sm" style="margin-top: 20px; padding: 10px 20px;" onclick="window.trocarAbaPerfil('editar-perfil')">
-          ✏️ Editar Perfil
-        </button>
-      </div>
-    </div>
-  `;
-}
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-// 2. Aba: Minhas Publicações
-async function renderizarAbaMeusPosts(container) {
-  container.innerHTML = `<p class="loading">Buscando seus trabalhos...</p>`;
-
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) return;
-
-  const { data: posts, error } = await supabaseClient
-    .from('posts')
-    .select('*, profiles(nome, username, avatar_url), post_media(*)')
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    container.innerHTML = `<p class="status-msg" style="color:var(--primary)">Erro ao buscar publicações.</p>`;
-    return;
-  }
-
-  if (!posts || posts.length === 0) {
+      if (error) throw error;
+      profile = data;
+    }
+  } catch (err) {
+    console.error("Erro ao carregar perfil:", err);
     container.innerHTML = `
-      <div class="empty-state">
-        <p>Você ainda não fez nenhuma publicação.</p>
-        <button class="btn-primary-sm" style="margin-top: 15px;" onclick="window.abrirModalPost()">+ Publicar Agora</button>
+      <div style="text-align: center; color: #BA3F1D; padding: 50px;">
+        <h2>Erro ao carregar o perfil do usuário.</h2>
+        <p style="color: #888; margin-top: 10px;">Verifique se o nome de usuário existe.</p>
       </div>
     `;
     return;
   }
 
-  meusPosts = posts;
-
+  // Renderiza a estrutura visual do portfólio no container
   container.innerHTML = `
-    <h3 style="margin-bottom: 20px;">Suas Publicações (${posts.length})</h3>
-    <div class="grid-container">
-      ${posts.map(post => {
-        const media = (post.post_media && post.post_media.length > 0) ? post.post_media[0] : null;
-        let mediaTag = '<div style="padding: 20px; background: #111; text-align: center; color: #666; border-radius: 6px;">Sem Mídia</div>';
-
-        if (media && media.midia_url) {
-          if (media.tipo_midia === 'video') {
-            mediaTag = `<video src="${media.midia_url}" muted preload="metadata"></video>`;
-          } else if (media.tipo_midia === 'audio') {
-            mediaTag = `<div style="padding: 20px; background: #2a2e33; border-radius: 6px; text-align: center;">🎵 Áudio / Música</div>`;
-          } else {
-            mediaTag = `<img src="${media.midia_url}" alt="${post.titulo || 'Mídia'}" loading="lazy" />`;
-          }
-        }
-
-        return `
-          <div class="card" onclick="window.abrirModalDetalhes('${post.id}')">
-            ${mediaTag}
-            <h3>${post.titulo || 'Sem título'}</h3>
-            <p>${post.descricao ? (post.descricao.substring(0, 60) + '...') : ''}</p>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
-// 3. Aba: Editar Perfil (Formulário)
-function renderizarAbaEditarPerfil(container) {
-  const p = profileDados;
-  const habString = p.habilidades ? p.habilidades.join(', ') : '';
-
-  container.innerHTML = `
-    <div class="perfil-form-container">
-      <h3>Editar Informações Pessoais</h3>
+    <div class="portfolio-container" style="max-width: 1100px; margin: 0 auto; padding: 20px; color: #F5F5F5;">
       
-      <form id="perfil-form" style="margin-top: 20px;">
-        <div class="form-group">
-          <label>Nome Completo *</label>
-          <input type="text" id="edit-nome" value="${p.nome || ''}" required>
+      <!-- CABEÇALHO DO PERFIL -->
+      <div class="profile-header-card" style="background: #22262B; padding: 30px; border-radius: 12px; display: flex; gap: 25px; align-items: center; border-bottom: 3px solid #BA3F1D;">
+        <img 
+          src="${profile.avatar_url || 'https://via.placeholder.com/120'}" 
+          alt="${profile.nome || 'Avatar'}" 
+          style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #279AF1;"
+        />
+        
+        <div style="flex: 1;">
+          <h1 style="margin: 0; font-size: 1.8rem; color: #F5F5F5;">${profile.nome || 'Usuário FATEC'}</h1>
+          <p style="margin: 4px 0; color: #279AF1; font-weight: bold;">@${profile.username || 'username'}</p>
+          ${profile.nome_artistico ? `<small style="color: #888888; display: block; margin-bottom: 8px;">Conhecido como: ${profile.nome_artistico}</small>` : ''}
+          <p style="margin: 10px 0; color: #DDD; font-size: 0.95rem;">${profile.bio || 'Sem bio cadastrada.'}</p>
+          
+          <!-- HABILIDADES / TAGS -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+            ${(profile.habilidades || []).map(skill => `
+              <span style="background: #181B1F; border: 1px solid #279AF1; color: #279AF1; padding: 4px 10px; border-radius: 15px; font-size: 0.8rem;">
+                ${skill}
+              </span>
+            `).join('')}
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Nome de Usuário (@username) *</label>
-          <input type="text" id="edit-username" value="${p.username || ''}" required>
+        <!-- BOTÃO DE COMPARTILHAR PORTFÓLIO -->
+        <div>
+          <button id="btnSharePortfolio" style="background: #BA3F1D; color: #FFF; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;">
+            🔗 Compartilhar Portfólio
+          </button>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label>Nome Artístico (Opcional)</label>
-          <input type="text" id="edit-nome-artistico" value="${p.nome_artistico || ''}">
+      <!-- SEÇÕES DE TRABALHOS E PROJETOS -->
+      <div style="margin-top: 30px;">
+        <h2 style="border-bottom: 2px solid #22262B; padding-bottom: 10px; color: #279AF1;">🎨 Galeria de Trabalhos & Posts</h2>
+        <div id="userPostsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
+          <p style="color: #888;">Carregando trabalhos...</p>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label>Bio / Apresentação</label>
-          <textarea id="edit-bio" rows="4">${p.bio || ''}</textarea>
+      <div style="margin-top: 40px;">
+        <h2 style="border-bottom: 2px solid #22262B; padding-bottom: 10px; color: #279AF1;">📁 Projetos Integradores & Acadêmicos</h2>
+        <div id="userProjectsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">
+          <p style="color: #888;">Carregando projetos...</p>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label>Habilidades (separadas por vírgula)</label>
-          <input type="text" id="edit-habilidades" value="${habString}" placeholder="Ex: Ilustração, Pixel Art, Audio, UI/UX">
-        </div>
-
-        <div class="form-group">
-          <label>Alterar Foto de Perfil</label>
-          <input type="file" id="edit-avatar" accept="image/*">
-        </div>
-
-        <button type="submit" id="btn-salvar-perfil" class="btn-primary">Salvar Alterações</button>
-        <p id="mensagem-status-perfil" class="status-msg"></p>
-      </form>
     </div>
   `;
 
-  document.getElementById('perfil-form').addEventListener('submit', salvarPerfil);
-}
-
-// 4. Aba: Zona de Perigo
-function renderizarAbaZonaPerigo(container) {
-  container.innerHTML = `
-    <div class="danger-zone-card">
-      <h3 style="color: var(--primary);">⚠️ Configurações e Segurança da Conta</h3>
-      <p style="color: var(--text-muted); margin: 15px 0;">
-        Ao apagar sua conta, todos os seus dados de perfil e publicações serão removidos permanentemente. Esta ação não pode ser desfeita.
-      </p>
-      <button type="button" class="btn-danger" onclick="window.deletarConta()">Deletar Minha Conta</button>
-    </div>
-  `;
-}
-
-// Handler de Salvamento do Perfil (Com remoção do avatar antigo do Bucket)
-async function salvarPerfil(e) {
-  e.preventDefault();
-  const btn = document.getElementById('btn-salvar-perfil');
-  const statusMsg = document.getElementById('mensagem-status-perfil');
-  btn.disabled = true;
-  statusMsg.style.color = 'var(--secondary)';
-  statusMsg.textContent = 'Salvando alterações...';
-
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const user = session.user;
-
-  const nome = document.getElementById('edit-nome').value.trim();
-  const username = document.getElementById('edit-username').value.trim();
-  const nome_artistico = document.getElementById('edit-nome-artistico').value.trim() || null;
-  const bio = document.getElementById('edit-bio').value.trim() || null;
-  
-  const habInput = document.getElementById('edit-habilidades').value;
-  const habilidades = habInput ? habInput.split(',').map(item => item.trim()).filter(Boolean) : [];
-  const avatarFile = document.getElementById('edit-avatar').files[0];
-
-  try {
-    let avatar_url = null;
-
-    if (avatarFile) {
-      // Deleta o avatar antigo do bucket 'avatars' se existir
-      if (profileDados.avatar_url) {
-        const partesUrl = profileDados.avatar_url.split('/avatars/');
-        if (partesUrl.length > 1) {
-          const antigoCaminho = partesUrl[1];
-          await supabaseClient.storage.from('avatars').remove([antigoCaminho]);
-        }
-      }
-
-      const fileExt = avatarFile.name.split('.').pop();
-      const filePath = `${user.id}/avatar_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
-
-      if (!uploadError) {
-        const { data: publicUrlData } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
-        avatar_url = publicUrlData.publicUrl;
-      }
+  // Evento do botão compartilhar para gerar a URL correta baseada em hash
+  document.getElementById('btnSharePortfolio')?.addEventListener('click', () => {
+    let cleanPath = window.location.pathname;
+    if (cleanPath.endsWith('.html')) {
+      cleanPath = cleanPath.substring(0, cleanPath.lastIndexOf('/') + 1);
+    } else if (!cleanPath.endsWith('/')) {
+      cleanPath += '/';
     }
 
-    const updatePayload = { nome, username, nome_artistico, bio, habilidades };
-    if (avatar_url) updatePayload.avatar_url = avatar_url;
+    const shareUrl = `${window.location.origin}${cleanPath}#perfil?username=${profile.username}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert(`Link do portfólio copiado:\n${shareUrl}`);
+  });
 
-    const { error: updateError } = await supabaseClient
-      .from('profiles')
-      .update(updatePayload)
-      .eq('id', user.id);
+  // Carrega mídias e projetos do usuário
+  loadUserPosts(profile.id);
+  loadUserProjects(profile.id);
+}
 
-    if (updateError) throw updateError;
+async function loadUserPosts(userId) {
+  const grid = document.getElementById('userPostsGrid');
+  if (!grid) return;
 
-    // Atualiza o objeto em memória
-    profileDados = { ...profileDados, ...updatePayload };
+  try {
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select(`
+        id, titulo, descricao, created_at,
+        post_media (midia_url, tipo_midia)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-    statusMsg.style.color = '#4CAF50';
-    statusMsg.textContent = 'Perfil atualizado com sucesso!';
-    await verificarSessao();
+    if (error) throw error;
 
-    setTimeout(() => {
-      trocarAbaPerfil('ver-perfil');
-    }, 1200);
+    if (!posts || posts.length === 0) {
+      grid.innerHTML = `<p style="color: #888; grid-column: 1/-1;">Nenhum trabalho publicado ainda.</p>`;
+      return;
+    }
+
+    grid.innerHTML = posts.map(post => {
+      const coverMedia = post.post_media && post.post_media.length > 0 ? post.post_media[0].midia_url : 'https://via.placeholder.com/300x200?text=Sem+Imagem';
+      return `
+        <div style="background: #22262B; border-radius: 8px; overflow: hidden; border: 1px solid #181B1F;">
+          <img src="${coverMedia}" alt="${post.titulo || 'Mídia'}" style="width: 100%; height: 180px; object-fit: cover;" />
+          <div style="padding: 15px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #F5F5F5;">${post.titulo || 'Sem título'}</h3>
+            <p style="margin: 0; color: #AAA; font-size: 0.85rem; line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">
+              ${post.descricao || ''}
+            </p>
+          </div>
+        </div>
+      `;
+    }).join('');
 
   } catch (err) {
-    statusMsg.style.color = 'var(--primary)';
-    statusMsg.textContent = `Erro ao atualizar: ${err.message}`;
-    btn.disabled = false;
+    console.error("Erro ao carregar posts do perfil:", err);
+    grid.innerHTML = `<p style="color: #BA3F1D;">Erro ao carregar galeria.</p>`;
+  }
+}
+
+async function loadUserProjects(userId) {
+  const grid = document.getElementById('userProjectsGrid');
+  if (!grid) return;
+
+  try {
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (!projects || projects.length === 0) {
+      grid.innerHTML = `<p style="color: #888; grid-column: 1/-1;">Nenhum projeto cadastrado.</p>`;
+      return;
+    }
+
+    grid.innerHTML = projects.map(proj => `
+      <div style="background: #22262B; padding: 20px; border-radius: 8px; border-left: 4px solid #279AF1;">
+        <h3 style="margin: 0 0 10px 0; color: #F5F5F5;">${proj.titulo}</h3>
+        <p style="color: #AAA; font-size: 0.9rem; margin-bottom: 12px;">${proj.descricao || ''}</p>
+        <span style="background: #181B1F; color: #279AF1; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;">
+          Status: ${proj.status || 'Ativo'}
+        </span>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error("Erro ao carregar projetos do perfil:", err);
+    grid.innerHTML = `<p style="color: #BA3F1D;">Erro ao carregar projetos.</p>`;
   }
 }
 
 export async function deletarConta() {
-  const confirmacao = confirm("Tem certeza absoluta que deseja apagar sua conta? Esta ação não pode ser desfeita.");
+  const confirmacao = confirm("Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita.");
   if (!confirmacao) return;
 
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) return;
-
   try {
-    const { error: profileError } = await supabaseClient.from('profiles').delete().eq('id', session.user.id);
-    if (profileError) throw profileError;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-    await supabaseClient.auth.signOut();
-    alert("Sua conta foi removida com sucesso.");
-    navegarPara('/');
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', user.id);
+
+    if (error) throw error;
+
+    await supabase.auth.signOut();
+    alert("Sua conta foi excluída com sucesso.");
+    window.location.reload();
   } catch (err) {
-    alert(`Erro ao tentar deletar conta: ${err.message}`);
+    console.error("Erro ao deletar conta:", err);
+    alert("Erro ao tentar excluir a conta.");
   }
 }
