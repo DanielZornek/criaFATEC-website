@@ -7,7 +7,7 @@ export async function renderizarFeed() {
   app.className = 'container grid-layout';
   app.innerHTML = `
     <section class="feed-section">
-      <h2>Galeria de Trabalhos</h2>
+      <h2>Últimos Trabalhos Publicados</h2>
       <div id="posts-container" class="grid-container">
         <p class="loading">Carregando publicações...</p>
       </div>
@@ -30,7 +30,7 @@ export async function carregarPosts() {
   const container = document.getElementById('posts-container');
   if (!container) return;
 
-  // Busca os posts junto com perfis e mídias sem depender de autenticação prévia
+  // Busca exatamente os 12 últimos posts junto com perfis e mídias
   const { data: posts, error } = await supabaseClient
     .from('posts')
     .select('*, profiles!inner(nome, username, avatar_url), post_media(*)')
@@ -38,7 +38,6 @@ export async function carregarPosts() {
     .limit(12);
 
   if (error) {
-    // Fallback sem o !inner caso haja incompatibilidade pontual na consulta
     const { data: postsFallback } = await supabaseClient
       .from('posts')
       .select('*, profiles(nome, username, avatar_url), post_media(*)')
@@ -86,7 +85,7 @@ async function carregarEventos() {
   const container = document.getElementById('events-container');
   if (!container) return;
 
-  const { data: events, error } = await supabaseClient.from('events').select('*');
+  const { data: events, error } = await supabaseClient.from('events').select('*').order('created_at', { ascending: false });
 
   if (error || !events || events.length === 0) {
     container.innerHTML = '<p>Nenhum evento agendado.</p>';

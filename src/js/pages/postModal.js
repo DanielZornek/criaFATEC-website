@@ -1,234 +1,87 @@
-import { supabaseClient } from '../supabase.js';
-import { navegarPara } from '../router.js';
-import { postsCarregados, carregarPosts } from './feed.js';
+// src/js/pages/postModal.js
+import { supabase } from '../supabase.js';
+import { postsCarregados } from './feed.js';
 
-export function abrirModalPost() {
-  const modal = document.getElementById('modal-post');
-  if (modal) modal.classList.add('active');
-}
-
-export function fecharModalPost() {
-  const modal = document.getElementById('modal-post');
-  if (modal) {
-    modal.classList.remove('active');
-    document.getElementById('form-criar-post')?.reset();
-    const statusMsg = document.getElementById('mensagem-status-post');
-    if (statusMsg) statusMsg.textContent = '';
-  }
-}
-
+// Abre o modal de detalhes do post (clicado na vitrine)
 export async function abrirModalDetalhes(postId) {
-  try {
-    const post = postsCarregados.find(p => String(p.id) === String(postId));
-    if (!post) {
-      console.warn("Post não encontrado no array postsCarregados para o ID:", postId);
+  const modal = document.getElementById('modal-post-detalhes');
+  const conteudoDiv = document.getElementById('modal-post-conteudo');
+  
+  if (!modal || !conteudoDiv) return;
+
+  conteudoDiv.innerHTML = `<p style="text-align: center; color: #888; padding: 30px;">Carregando detalhes...</p>`;
+  modal.style.display = 'flex';
+
+  // Procura o post na lista já carregada ou busca diretamente no Supabase
+  let post = postsCarregados.find(p => p.id == postId);
+
+  if (!post) {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, profiles(nome, username, avatar_url), post_media(*)')
+        .eq('id', postId)
+        .single();
+      
+      if (error) throw error;
+      post = data;
+    } catch (err) {
+      console.error("Erro ao carregar detalhes do post:", err);
+      conteudoDiv.innerHTML = `<p style="text-align: center; color: #BA3F1D; padding: 30px;">Erro ao carregar publicação.</p>`;
       return;
     }
+  }
 
-    const modal = document.getElementById('modal-post-detalhes');
-    const conteudo = document.getElementById('modal-post-conteudo');
-    if (!modal || !conteudo) return;
+  if (!post) {
+    conteudoDiv.innerHTML = `<p style="text-align: center; color: #888; padding: 30px;">Publicação não encontrada.</p>`;
+    return;
+  }
 
-    // Verificar se é o dono do post
-    let eDonoDoPost = false;
-    const { data: authData } = await supabaseClient.auth.getSession();
-    if (authData && authData.session) {
-      eDonoDoPost = authData.session.user.id === post.user_id;
+  const media = (post.post_media && post.post_media.length > 0) ? post.post_media[0] : null;
+  let mediaHtml = '<div style="padding: 40px; background: #111; text-align: center; color: #666; border-radius: 8px;">Sem Mídia</div>';
+
+  if (media && media.midia_url) {
+    if (media.tipo_midia === 'video') {
+      mediaHtml = `<video src="${media.midia_url}" controls autoplay style="width: 100%; max-height: 400px; border-radius: 8px;"></video>`;
+    } else if (media.tipo_midia === 'audio') {
+      mediaHtml = `
+        <div style="padding: 30px; background: #181B1F; border-radius: 8px; text-align: center;">
+          <p style="margin-bottom: 15px; color: #279AF1; font-weight: bold;">🎵 Arquivo de Áudio / Trilha Sonora</p>
+          <audio src="${media.midia_url}" controls style="width: 100%;"></audio>
+        </div>`;
+    } else {
+      mediaHtml = `<img src="${media.midia_url}" alt="${post.titulo || 'Mídia'}" style="width: 100%; max-height: 450px; object-fit: contain; border-radius: 8px; background: #111;" />`;
     }
+  }
 
-    const botaoDeletar = eDonoDoPost 
-      ? `<button class="btn-danger" style="margin-top: 20px; width: auto; padding: 8px 16px;" onclick="window.deletarPost('${post.id}')">🗑️ Apagar Publicação</button>`
-      : '';
+  const autor = post.profiles || {};
+  const autorNome = autor.nome || autor.username || 'Usuário FATEC';
+  const autorUsername = autor.username ? `@${autor.username}` : '';
+  const dataFormatada = new Date(post.created_at).toLocaleDateString('pt-BR');
 
-    // Mídia
-    const media = (post.post_media && post.post_media.length > 0) ? post.post_media[0] : null;
-    let mediaTag = '';
-
-    if (media && media.midia_url) {
-      if (media.tipo_midia === 'video') {
-        mediaTag = `<div class="post-detalhes-media"><video src="${media.midia_url}" controls autoplay></video></div>`;
-      } else if (media.tipo_midia === 'audio') {
-        mediaTag = `<div class="post-detalhes-media" style="padding: 20px; background: #111; border-radius: 8px; text-align: center;"><audio src="${media.midia_url}" controls style="width: 100%;"></audio></div>`;
-      } else {
-        mediaTag = `<div class="post-detalhes-media"><img src="${media.midia_url}" alt="${post.titulo || 'Mídia'}" /></div>`;
-      }
-    }
-
-    // Autor
-    const autor = post.profiles || {};
-    const autorNome = autor.nome || autor.username || 'Usuário';
-    const avatarImg = autor.avatar_url 
-      ? `<img src="${autor.avatar_url}" class="nav-avatar" />` 
-      : `<div class="nav-avatar-placeholder"></div>`;
-
-    conteudo.innerHTML = `
-      <div class="post-detalhes-container">
-        ${mediaTag}
-        <div class="post-detalhes-header">
-          <h2>${post.titulo || 'Sem título'}</h2>
-          <div class="post-detalhes-autor">
-            ${avatarImg}
-            <span>Publicado por <strong>${autorNome}</strong></span>
+  conteudoDiv.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 20px; color: #F5F5F5;">
+      <div>${mediaHtml}</div>
+      <div>
+        <h2 style="margin: 0 0 10px 0; font-size: 1.5rem; color: #F5F5F5;">${post.titulo || 'Sem título'}</h2>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+          <img src="${autor.avatar_url || 'https://via.placeholder.com/40'}" alt="${autorNome}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;" />
+          <div>
+            <p style="margin: 0; font-weight: bold; font-size: 0.95rem; color: #279AF1;">${autorNome} <span style="color: #888; font-weight: normal; font-size: 0.85rem;">${autorUsername}</span></p>
+            <small style="color: #888;">Publicado em ${dataFormatada}</small>
           </div>
         </div>
-        <div class="post-detalhes-descricao">
-          ${post.descricao || 'Sem descrição fornecida.'}
-        </div>
-        ${botaoDeletar}
+        <p style="margin: 0; color: #DDD; line-height: 1.6; white-space: pre-line;">${post.descricao || 'Sem descrição informada.'}</p>
       </div>
-    `;
+    </div>
+  `;
+}
 
-    modal.classList.add('active');
-  } catch (err) {
-    console.error("Erro ao abrir modal de detalhes:", err);
+// Fecha o modal de detalhes
+export function fecharModalDetalhes(event) {
+  const modal = document.getElementById('modal-post-detalhes');
+  if (!modal) return;
+  if (!event || event.target === modal || event.target.classList.contains('btn-close')) {
+    modal.style.display = 'none';
   }
-}
-
-export function fecharModalDetalhes(e) {
-  if (!e || e.target.id === 'modal-post-detalhes' || e.target.classList.contains('btn-close')) {
-    const modal = document.getElementById('modal-post-detalhes');
-    if (modal) modal.classList.remove('active');
-  }
-}
-
-// Handler de envio de publicação
-export function inicializarFormularioPost() {
-  const formPost = document.getElementById('form-criar-post');
-  if (!formPost) return;
-
-  formPost.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btn-publicar');
-    const statusMsg = document.getElementById('mensagem-status-post');
-
-    btn.disabled = true;
-    statusMsg.style.color = 'var(--secondary)';
-    statusMsg.textContent = 'Enviando arquivo e publicando...';
-
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-      alert("Você precisa estar logado para publicar.");
-      fecharModalPost();
-      navegarPara('/login');
-      return;
-    }
-
-    const userId = session.user.id;
-    const titulo = document.getElementById('post-titulo').value.trim();
-    const descricao = document.getElementById('post-descricao').value.trim() || null;
-    const midiaFile = document.getElementById('post-midia').files[0];
-
-    try {
-      let tipo_midia = 'imagem';
-      if (midiaFile.type.startsWith('video/')) tipo_midia = 'video';
-      else if (midiaFile.type.startsWith('audio/')) tipo_midia = 'audio';
-
-      const fileExt = midiaFile.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabaseClient.storage.from('posts').upload(fileName, midiaFile);
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabaseClient.storage.from('posts').getPublicUrl(fileName);
-      const midia_url = publicUrlData.publicUrl;
-
-      const { data: newPost, error: postError } = await supabaseClient
-        .from('posts')
-        .insert([{ user_id: userId, titulo, descricao }])
-        .select()
-        .single();
-
-      if (postError) throw postError;
-
-      const { error: mediaError } = await supabaseClient
-        .from('post_media')
-        .insert([{ post_id: newPost.id, midia_url, tipo_midia }]);
-
-      if (mediaError) throw mediaError;
-
-      statusMsg.style.color = '#4CAF50';
-      statusMsg.textContent = 'Publicado com sucesso!';
-
-      setTimeout(() => {
-        fecharModalPost();
-        btn.disabled = false;
-        if (window.location.pathname === '/') carregarPosts();
-      }, 1000);
-
-    } catch (err) {
-      statusMsg.style.color = 'var(--primary)';
-      statusMsg.textContent = `Erro ao publicar: ${err.message}`;
-      btn.disabled = false;
-    }
-  });
-}
-
-// Função para extrair o caminho do arquivo dentro do bucket a partir de uma URL pública
-function obterCaminhoDoBucket(publicUrl, bucketNome) {
-  if (!publicUrl) return null;
-  const partes = publicUrl.split(`/${bucketNome}/`);
-  return partes.length > 1 ? partes[1] : null;
-}
-
-export async function deletarPost(postId) {
-  const confirmacao = confirm("Tem certeza de que deseja apagar esta publicação?");
-  if (!confirmacao) return;
-
-  try {
-    // 1. Buscar a mídia vinculada ao post para obter a URL do arquivo no bucket
-    const { data: midias } = await supabaseClient
-      .from('post_media')
-      .select('midia_url')
-      .eq('post_id', postId);
-
-    // 2. Apagar o(s) arquivo(s) do Storage bucket 'posts'
-    if (midias && midias.length > 0) {
-      const caminhosParaDeletar = midias
-        .map(m => obterCaminhoDoBucket(m.midia_url, 'posts'))
-        .filter(Boolean);
-
-      if (caminhosParaDeletar.length > 0) {
-        const { error: storageError } = await supabaseClient.storage
-          .from('posts')
-          .remove(caminhosParaDeletar);
-
-        if (storageError) console.error("Aviso ao remover arquivo do bucket:", storageError);
-      }
-    }
-
-    // 3. Deletar o post no banco de dados
-    // (Com o ON DELETE CASCADE configurado, as entradas em post_media somem automaticamente)
-    const { error: deleteError } = await supabaseClient
-      .from('posts')
-      .delete()
-      .eq('id', postId);
-
-    if (deleteError) throw deleteError;
-
-    alert("Publicação apagada com sucesso!");
-    fecharModalDetalhes();
-    carregarPosts();
-
-  } catch (err) {
-    console.error("Erro ao deletar post:", err);
-    alert(`Erro ao apagar publicação: ${err.message}`);
-  }
-}
-
-// Função auxiliar para garantir URL e tipo corretos
-function normalizarMidia(media) {
-  if (!media || !media.midia_url) return null;
-
-  let url = media.midia_url;
-  // Se não começar com http/https, monta a URL pública do Supabase manualmente
-  if (!url.startsWith('http')) {
-    url = `https://fpomnbsbgsmbrnatfmrj.supabase.co/storage/v1/object/public/posts/${url}`;
-  }
-
-  let tipo = media.tipo_midia || 'imagem';
-  if (tipo.includes('image') || tipo === 'imagem') tipo = 'imagem';
-  else if (tipo.includes('video')) tipo = 'video';
-  else if (tipo.includes('audio')) tipo = 'audio';
-
-  return { url, tipo };
 }

@@ -1,3 +1,4 @@
+// src/js/auth.js
 import { supabaseClient } from './supabase.js';
 import { navegarPara } from './router.js';
 
@@ -22,8 +23,6 @@ export async function verificarSessao() {
       : `<div class="nav-avatar-placeholder"></div>`;
 
     userArea.innerHTML = `
-      <button class="btn-primary-sm" onclick="window.abrirModalPost()">+ Criar Post</button>
-
       <div class="user-menu-container">
         <button class="user-button" onclick="window.toggleDropdown()">
           ${avatarImg}
