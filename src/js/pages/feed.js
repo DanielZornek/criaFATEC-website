@@ -1,6 +1,7 @@
 import { supabase as supabaseClient } from '../supabase.js';
 
 export let postsCarregados = [];
+export let eventosCarregados = [];
 
 export async function renderizarFeed() {
   const app = document.getElementById('app');
@@ -30,27 +31,41 @@ export async function carregarPosts() {
   const container = document.getElementById('posts-container');
   if (!container) return;
 
-  // Busca exatamente os 12 últimos posts junto com perfis e mídias
-  const { data: posts, error } = await supabaseClient
+  let { data: posts, error } = await supabaseClient
     .from('posts')
     .select('*, profiles!inner(nome, username, avatar_url), post_media(*)')
     .order('created_at', { ascending: false })
-    .limit(12);
+    .limit(40);
 
-  if (error) {
+  let postsBrutos = posts;
+
+  if (error || !postsBrutos) {
     const { data: postsFallback } = await supabaseClient
       .from('posts')
       .select('*, profiles(nome, username, avatar_url), post_media(*)')
       .order('created_at', { ascending: false })
-      .limit(12);
+      .limit(40);
 
-    if (!postsFallback || postsFallback.length === 0) {
-      container.innerHTML = '<p>Nenhum trabalho publicado ainda.</p>';
-      return;
+    postsBrutos = postsFallback || [];
+  }
+
+  postsCarregados = postsBrutos.filter(post => {
+    const status = (post.status || '').trim().toLowerCase();
+    
+    if (status === 'bloqueado' || status === 'inativo' || status === 'false' || status.includes('bloq')) {
+      return false;
     }
-    postsCarregados = postsFallback;
-  } else {
-    postsCarregados = posts;
+    
+    if (post.titulo && post.titulo.toLowerCase().includes('desenho monstro')) {
+      return false;
+    }
+
+    return true;
+  }).slice(0, 12);
+
+  if (postsCarregados.length === 0) {
+    container.innerHTML = '<p>Nenhum trabalho publicado ainda.</p>';
+    return;
   }
 
   container.innerHTML = postsCarregados.map(post => {
@@ -85,32 +100,44 @@ async function carregarEventos() {
   const container = document.getElementById('events-container');
   if (!container) return;
 
-  const { data: events, error } = await supabaseClient.from('events').select('*').order('created_at', { ascending: false });
+  const { data: events, error } = await supabaseClient
+    .from('events')
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error || !events || events.length === 0) {
     container.innerHTML = '<p>Nenhum evento agendado.</p>';
     return;
   }
 
-  container.innerHTML = events.map(event => `
-    <div class="event-card">
-      <h4>${event.titulo || 'Evento'}</h4>
-      <p>${event.descricao || ''}</p>
-      <small style="color: var(--secondary)">${event.data_evento ? new Date(event.data_evento).toLocaleDateString('pt-BR') : ''}</small>
-    </div>
-  `).join('');
+  eventosCarregados = events;
+
+  container.innerHTML = events.map(event => {
+    const dataFormatada = event.data_evento ? new Date(event.data_evento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
+
+    return `
+      <div class="event-card" onclick="window.location.href='evento.html?id=${event.id}'" style="background: var(--bg-card, #1e2227); padding: 12px 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #333; cursor: pointer; transition: border-color 0.2s;">
+        <h4 style="margin: 0 0 4px 0; color: var(--text-light, #fff); font-size: 0.95rem;">${event.titulo || 'Evento'}</h4>
+        ${dataFormatada ? `<small style="color: var(--secondary, #279AF1); font-size: 0.75rem;">📅 ${dataFormatada}</small>` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 export async function atualizarContadorPosts() {
   const elContador = document.getElementById('stat-total-posts');
   if (!elContador) return;
 
-  const { count, error } = await supabaseClient
+  const { data: allPosts, error } = await supabaseClient
     .from('posts')
-    .select('*', { count: 'exact', head: true });
+    .select('id, status, titulo');
 
-  if (!error && count !== null) {
-    elContador.textContent = count;
+  if (!error && allPosts) {
+    const postsValidos = allPosts.filter(p => {
+      const status = (p.status || '').trim().toLowerCase();
+      return status !== 'bloqueado' && status !== 'inativo' && (!p.titulo || !p.titulo.toLowerCase().includes('desenho monstro'));
+    });
+    elContador.textContent = postsValidos.length;
   } else {
     elContador.textContent = '0';
   }

@@ -1,4 +1,3 @@
-// src/js/pages/postModal.js
 import { supabase } from '../supabase.js';
 import { postsCarregados } from './feed.js';
 
@@ -32,8 +31,9 @@ export async function abrirModalDetalhes(postId) {
     }
   }
 
-  if (!post) {
-    conteudoDiv.innerHTML = `<p style="text-align: center; color: #888; padding: 30px;">Publicação não encontrada.</p>`;
+  // TRAVA DE SEGURANÇA: Se o post estiver bloqueado, barra a exibição
+  if (!post || post.status === 'bloqueado') {
+    conteudoDiv.innerHTML = `<p style="text-align: center; color: #BA3F1D; padding: 30px;">Esta publicação foi bloqueada pela moderação e não está disponível.</p>`;
     return;
   }
 

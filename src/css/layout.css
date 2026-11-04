@@ -164,7 +164,7 @@
 .carousel-wrapper {
   display: flex;
   position: relative;
-  min-height: 200px;
+  min-height: 350px;
 }
 
 .carousel-slide {

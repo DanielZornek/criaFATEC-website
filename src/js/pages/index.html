@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embalamil Peruíbe | Embalagens Descartáveis e Artigos para Festas</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Ícones do FontAwesome para o WhatsApp -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Header / Barra de Navegação -->
+  <header class="header">
+    <div class="container nav-container">
+      <div class="logo">
+        <h1>EMBALA<span>MIL</span></h1>
+        <small>Peruíbe - SP</small>
+      </div>
+      <a href="https://wa.me/5513999999999?text=Olá!%20Vim%20pelo%20site%20e%20gostaria%20de%20um%20orçamento." target="_blank" class="btn-whatsapp-header">
+        <i class="fab fa-whatsapp"></i> Fazer Orçamento
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Banner -->
+  <section class="hero">
+    <div class="container hero-content">
+      <h2>As melhores soluções em embalagens e descartáveis em Peruíbe</h2>
+      <p>Atendemos restaurantes, pizzarias, quiosques, comércios e festas. Entrega rápida e o melhor preço da região do Centro!</p>
+      <a href="#catalogo" class="btn-primary">Ver Produtos</a>
+    </div>
+  </section>
+
+  <!-- Filtros e Catálogo de Produtos -->
+  <section class="catalogo-section container" id="catalogo">
+    <h3>Nosso Catálogo</h3>
+    
+    <!-- Filtros de Categoria -->
+    <div class="filter-buttons">
+      <button class="btn-filter active" data-filter="todos">Todos</button>
+      <button class="btn-filter" data-filter="delivery">Delivery & Marmitex</button>
+      <button class="btn-filter" data-filter="descartaveis">Descartáveis</button>
+      <button class="btn-filter" data-filter="festas">Artigos de Festa</button>
+    </div>
+
+    <!-- Grid de Produtos -->
+    <div class="products-grid">
+
+      <div class="product-card" data-category="delivery">
+        <div class="product-img-placeholder">🍕</div>
+        <h4>Caixas de Pizza & Marmitex</h4>
+        <p>Diversos tamanhos, térmicas e super resistentes para entregas.</p>
+        <button class="btn-card-wa" onclick="solicitarOrcamento('Caixas de Pizza e Marmitex')">
+          <i class="fab fa-whatsapp"></i> Cotar no WhatsApp
+        </button>
+      </div>
+
+      <div class="product-card" data-category="descartaveis">
+        <div class="product-img-placeholder">🥤</div>
+        <h4>Copos, Pratos & Talheres</h4>
+        <p>Pacotes no atacado e varejo para lanchonetes e eventos.</p>
+        <button class="btn-card-wa" onclick="solicitarOrcamento('Copos e Pratos Descartáveis')">
+          <i class="fab fa-whatsapp"></i> Cotar no WhatsApp
+        </button>
+      </div>
+
+      <div class="product-card" data-category="festas">
+        <div class="product-img-placeholder">🎈</div>
+        <h4>Bexigas & Decoração de Festa</h4>
+        <p>Variedade em cores, temas e descartáveis coloridos.</p>
+        <button class="btn-card-wa" onclick="solicitarOrcamento('Artigos para Festa')">
+          <i class="fab fa-whatsapp"></i> Cotar no WhatsApp
+        </button>
+      </div>
+
+      <div class="product-card" data-category="delivery">
+        <div class="product-img-placeholder">🛍️</div>
+        <h4>Sacolas Plásticas & Papel Kraft</h4>
+        <p>Sacolas reforçadas para comércio, lojas e restaurantes.</p>
+        <button class="btn-card-wa" onclick="solicitarOrcamento('Sacolas Plásticas e Papel Kraft')">
+          <i class="fab fa-whatsapp"></i> Cotar no WhatsApp
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Localização / Contato -->
+  <section class="info-section">
+    <div class="container info-grid">
+      <div class="info-box">
+        <i class="fas fa-map-marker-alt"></i>
+        <h4>Onde Estamos</h4>
+        <p>Av. Padre Anchieta - Centro<br>Peruíbe - SP</p>
+      </div>
+      <div class="info-box">
+        <i class="fas fa-clock"></i>
+        <h4>Horário de Funcionamento</h4>
+        <p>Segunda a Sábado: 08h às 18h</p>
+      </div>
+      <div class="info-box">
+        <i class="fas fa-truck"></i>
+        <h4>Atendimento Rápido</h4>
+        <p>Orçamentos via WhatsApp para empresários e comerciantes locais.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; EMBALAMIL Peruíbe - Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Botão Flutuante do WhatsApp -->
+  <a href="https://wa.me/5513999999999?text=Olá!%20Gostaria%20de%20tirar%20uma%20dúvida%20sobre%20embalagens." target="_blank" class="float-wa">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -3,10 +3,15 @@ import { verificarSessao } from './auth.js';
 import { renderizarFeed } from './pages/feed.js';
 import { renderPerfilPage as renderizarPerfil } from './pages/perfil.js';
 import { renderizarLogin, renderizarCadastro } from './pages/authPages.js';
+import { renderizarEventoDetalhes } from './pages/eventoDetalhes.js';
 
 export function navegarPara(path) {
   if (path.startsWith('/perfil')) {
     window.location.hash = path.replace('/perfil', '#perfil');
+    return;
+  }
+  if (path.startsWith('/evento')) {
+    window.location.hash = path;
     return;
   }
   if (path.startsWith('/login')) {
@@ -32,12 +37,10 @@ export async function rotear() {
   const path = window.location.pathname;
   const app = document.getElementById('app');
 
-  // Elementos do index.html que devem sumir fora do feed
   const carousel = document.querySelector('.hero-carousel-container');
   const stats = document.querySelector('.stats-bar');
   const categories = document.querySelector('.categories-section');
 
-  // Atualiza estado do usuário na navbar
   await verificarSessao();
 
   if (app) {
@@ -45,8 +48,9 @@ export async function rotear() {
     void app.offsetWidth;
   }
 
-  // Verifica se é tela secundária (considerando hash que começa com #perfil, mesmo com parâmetros)
+  // Verifica se é tela secundária (perfil, auth ou detalhes de evento)
   const ehTelaSecundaria = hash.startsWith('#perfil') || 
+                           hash.startsWith('#evento') ||
                            hash.startsWith('#login') || 
                            hash.startsWith('#cadastro') ||
                            path === '/login' || 
@@ -63,9 +67,11 @@ export async function rotear() {
     if (categories) categories.style.display = 'block';
   }
 
-  // Executa a renderização de cada página de forma robusta
+  // Executa o roteamento correto
   if (hash.startsWith('#perfil')) {
     await renderizarPerfil();
+  } else if (hash.startsWith('#evento')) {
+    await renderizarEventoDetalhes();
   } else if (hash.startsWith('#login') || path === '/login') {
     await renderizarLogin();
   } else if (hash.startsWith('#cadastro') || path === '/cadastro') {

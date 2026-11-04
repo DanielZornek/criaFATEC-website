@@ -25,7 +25,7 @@
   <section class="hero-carousel-container container">
     <div class="carousel-wrapper" id="carousel-wrapper">
       <!-- Slide 1 -->
-      <div class="carousel-slide active" style="background: linear-gradient(135deg, #ba3f1d, #2b0b02);">
+      <div class="carousel-slide active" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('src/assets/banner-estudantes.jpg'); background-size: cover; background-position: center;">
         <div class="slide-content">
           <span class="badge-hero">🚀 Projeto Acadêmico</span>
           <h2>Explore o talento dos alunos da FATEC!</h2>
@@ -34,7 +34,7 @@
         </div>
       </div>
       <!-- Slide 2 -->
-      <div class="carousel-slide" style="background: linear-gradient(135deg, #2b5278, #0f1c29);">
+      <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('src/assets/banner-pixel.jpg'); background-size: cover; background-position: center;">
         <div class="slide-content">
           <span class="badge-hero">🎨 Arte & Design</span>
           <h2>Jogos, Pixel Art & Animações</h2>
@@ -43,7 +43,7 @@
         </div>
       </div>
       <!-- Slide 3 -->
-      <div class="carousel-slide" style="background: linear-gradient(135deg, #3d2b78, #160e2e);">
+      <div class="carousel-slide" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('src/assets/banner-show.jpg'); background-size: cover; background-position: center;">
         <div class="slide-content">
           <span class="badge-hero">📅 Eventos & Hackathons</span>
           <h2>Fique por dentro das feiras e maratonas</h2>
@@ -131,21 +131,12 @@
     </div>
   </footer>
 
-  <!-- Modal para ver Post Ampliado (Opcional caso clique no card) -->
-  <div id="modal-post-detalhes" class="modal-overlay" onclick="fecharModalDetalhes(event)">
+  <!-- Modal para ver Post ou Evento Ampliado -->
+  <div id="modal-post-detalhes" class="modal-overlay" onclick="window.fecharModalDetalhes(event)">
     <div class="modal-content modal-large">
-      <button class="btn-close" onclick="fecharModalDetalhes()">&times;</button>
+      <button class="btn-close" onclick="window.fecharModalDetalhes()">&times;</button>
       <div id="modal-post-conteudo">
-        <!-- Conteúdo do post injetado via JS -->
-      </div>
-    </div>
-  </div>
-  <!-- Modal para ver Post Ampliado (Vitrine Informativa) -->
-  <div id="modal-post-detalhes" class="modal-overlay" onclick="fecharModalDetalhes(event)">
-    <div class="modal-content modal-large">
-      <button class="btn-close" onclick="fecharModalDetalhes()">&times;</button>
-      <div id="modal-post-conteudo">
-        <!-- Conteúdo do post injetado via JS -->
+        <!-- Conteúdo injetado via JS -->
       </div>
     </div>
   </div>
