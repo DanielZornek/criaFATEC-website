@@ -51,6 +51,8 @@ export async function renderizarEventoDetalhes() {
     return;
   }
 
+  // Define a imagem padrão caso o banco venha sem imagem_url
+  const imagemFinal = evento.imagem_url || 'src/assets/evento-default.jpg';
   const dataFormatada = evento.data_evento ? new Date(evento.data_evento).toLocaleDateString('pt-BR', { timeZone: 'UTC', dateStyle: 'full' }) : 'Data a definir';
   const categoria = evento.categoria || 'Geral';
 
@@ -61,11 +63,9 @@ export async function renderizarEventoDetalhes() {
         ← Voltar ao Início
       </button>
 
-      ${evento.imagem_url ? `
-        <div style="width: 100%; max-height: 450px; overflow: hidden; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-          <img src="${evento.imagem_url}" alt="${evento.titulo}" style="width: 100%; height: 100%; object-fit: cover;" />
-        </div>
-      ` : ''}
+      <div style="width: 100%; max-height: 450px; overflow: hidden; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+        <img src="${imagemFinal}" alt="${evento.titulo}" style="width: 100%; height: 100%; object-fit: cover;" />
+      </div>
 
       <div style="display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
         <span style="background: #279AF1; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">🏷️ ${categoria}</span>

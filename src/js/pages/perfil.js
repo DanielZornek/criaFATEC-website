@@ -118,14 +118,6 @@ export async function renderPerfilPage() {
         </div>
       </div>
 
-      <!-- PROJETOS INTEGRADORES -->
-      <div style="margin-top: 40px;">
-        <h2 style="border-bottom: 2px solid #22262B; padding-bottom: 10px; color: #279AF1;">📁 Projetos Integradores & Acadêmicos</h2>
-        <div id="userProjectsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">
-          <p style="color: #888;">Carregando projetos...</p>
-        </div>
-      </div>
-
     </div>
 
     <!-- MODAL DE EDITAR PERFIL -->
@@ -173,6 +165,22 @@ export async function renderPerfilPage() {
         <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
           <button id="btnFecharModalContestacao" style="background: #444; color: #FFF; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cancelar</button>
           <button id="btnEnviarContestacao" style="background: #BA3F1D; color: #FFF; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Enviar Contestação</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE VISUALIZAÇÃO / PLAYER DE MÍDIA DO POST -->
+    <div id="modalPlayerPost" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;">
+      <div style="background: #22262B; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid #279AF1; color: #FFF;">
+        <h3 id="modalPlayerTitulo" style="margin-top: 0; color: #279AF1;">Detalhes da Mídia</h3>
+        <p id="modalPlayerDescricao" style="color: #AAA; font-size: 0.9rem; margin-bottom: 20px;"></p>
+        
+        <div id="modalPlayerConteudo" style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; background: #181B1F; border-radius: 8px; padding: 15px; min-height: 200px;">
+          <!-- Conteúdo dinâmico injetado via JS -->
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+          <button id="btnFecharModalPlayer" style="background: #444; color: #FFF; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Fechar</button>
         </div>
       </div>
     </div>
@@ -249,7 +257,6 @@ export async function renderPerfilPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Usa .insert simples para gravar a contestação na tabela 'contestacoes' sem erros de conflito
       const { error } = await supabase.from('contestacoes').insert([
         {
           post_id: postId,
@@ -271,7 +278,6 @@ export async function renderPerfilPage() {
   });
 
   loadUserPosts(profile.id, isOwner);
-  loadUserProjects(profile.id);
 }
 
 async function loadUserPosts(userId, isOwner = false) {
@@ -295,6 +301,8 @@ async function loadUserPosts(userId, isOwner = false) {
       return;
     }
 
+    window._userProfilePosts = posts;
+
     grid.innerHTML = posts.map(post => {
       const isBlocked = (post.status || '').trim().toLowerCase() === 'bloqueado';
       
@@ -313,7 +321,7 @@ async function loadUserPosts(userId, isOwner = false) {
         mediaHtml = `
           <div style="width: 100%; height: 180px; background: linear-gradient(135deg, #2b0b02, #ba3f1d); display: flex; flex-direction: column; justify-content: center; align-items: center; color: #FFF; ${isBlocked ? 'filter: grayscale(1); opacity: 0.5;' : ''}">
             <span style="font-size: 2.5rem; margin-bottom: 5px;">🎵</span>
-            <span style="font-size: 0.9rem; font-weight: bold;">Arquivo de Áudio / Música</span>
+            <span style="font-size: 0.9rem; font-weight: bold;">Clique para Ouvir Áudio</span>
           </div>
         `;
       } else {
@@ -325,7 +333,7 @@ async function loadUserPosts(userId, isOwner = false) {
       const motivoModeracao = "Música obscena / Conteúdo inadequado relatado pelo painel admin.";
 
       return `
-        <div style="background: #22262B; border-radius: 8px; overflow: hidden; border: ${isBlocked ? '2px solid #BA3F1D' : '1px solid #181B1F'}; position: relative;">
+        <div class="card-post-perfil" data-id="${post.id}" style="background: #22262B; border-radius: 8px; overflow: hidden; border: ${isBlocked ? '2px solid #BA3F1D' : '1px solid #181B1F'}; position: relative; cursor: pointer; transition: 0.2s;">
           ${mediaHtml}
           
           <div style="padding: 15px;">
@@ -335,7 +343,7 @@ async function loadUserPosts(userId, isOwner = false) {
             </p>
 
             ${isBlocked && isOwner ? `
-              <div style="margin-top: 12px; padding: 10px; background: rgba(186, 63, 29, 0.15); border-radius: 6px; border: 1px dashed #BA3F1D;">
+              <div style="margin-top: 12px; padding: 10px; background: rgba(186, 63, 29, 0.15); border-radius: 6px; border: 1px dashed #BA3F1D;" onclick="event.stopPropagation()">
                 <p style="margin: 0; color: #BA3F1D; font-size: 0.75rem; font-weight: bold;">🚫 Post Bloqueado pela Moderação</p>
                 <p style="margin: 4px 0 8px 0; color: #DDD; font-size: 0.75rem;"><strong>Motivo:</strong> ${motivoModeracao}</p>
                 <button class="btnAbrirContestacao" data-id="${post.id}" style="background: #BA3F1D; color: #FFF; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; width: 100%; font-weight: bold;">
@@ -357,43 +365,63 @@ async function loadUserPosts(userId, isOwner = false) {
       });
     });
 
+    document.querySelectorAll('.card-post-perfil').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btnAbrirContestacao')) return;
+
+        const postId = card.getAttribute('data-id');
+        const post = window._userProfilePosts.find(p => String(p.id) === String(postId));
+        if (!post) return;
+
+        const modalPlayer = document.getElementById('modalPlayerPost');
+        const titleEl = document.getElementById('modalPlayerTitulo');
+        const descEl = document.getElementById('modalPlayerDescricao');
+        const contentEl = document.getElementById('modalPlayerConteudo');
+
+        titleEl.textContent = post.titulo || 'Sem Título';
+        descEl.textContent = post.descricao || 'Sem descrição cadastrada.';
+
+        const media = (post.post_media && post.post_media.length > 0) ? post.post_media[0] : null;
+
+        if (!media || !media.midia_url) {
+          contentEl.innerHTML = `<p style="color: #888;">Nenhuma mídia associada a este post.</p>`;
+        } else if (media.tipo_midia === 'audio') {
+          contentEl.innerHTML = `
+            <div style="text-align: center; width: 100%;">
+              <p style="color: #279AF1; margin-bottom: 15px; font-weight: bold;">🎵 Player de Áudio</p>
+              <audio controls controlsList="nodownload" style="width: 100%;">
+                <source src="${media.midia_url}" type="audio/mpeg">
+                Seu navegador não suporta o elemento de áudio.
+              </audio>
+            </div>
+          `;
+        } else if (media.tipo_midia === 'video') {
+          contentEl.innerHTML = `
+            <video controls style="max-width: 100%; max-height: 350px; border-radius: 6px;">
+              <source src="${media.midia_url}">
+              Seu navegador não suporta vídeos.
+            </video>
+          `;
+        } else {
+          contentEl.innerHTML = `
+            <img src="${media.midia_url}" alt="Mídia do Post" style="max-width: 100%; max-height: 350px; object-fit: contain; border-radius: 6px;" />
+          `;
+        }
+
+        modalPlayer.style.display = 'flex';
+      });
+    });
+
+    const modalPlayer = document.getElementById('modalPlayerPost');
+    document.getElementById('btnFecharModalPlayer')?.addEventListener('click', () => {
+      const audioEl = modalPlayer.querySelector('audio');
+      if (audioEl) audioEl.pause();
+      modalPlayer.style.display = 'none';
+    });
+
   } catch (err) {
     console.error("Erro ao carregar posts do perfil:", err);
     grid.innerHTML = `<p style="color: #BA3F1D;">Erro ao carregar galeria.</p>`;
-  }
-}
-
-async function loadUserProjects(userId) {
-  const grid = document.getElementById('userProjectsGrid');
-  if (!grid) return;
-
-  try {
-    const { data: projects, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('owner_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    if (!projects || projects.length === 0) {
-      grid.innerHTML = `<p style="color: #888; grid-column: 1/-1;">Nenhum projeto cadastrado.</p>`;
-      return;
-    }
-
-    grid.innerHTML = projects.map(proj => `
-      <div style="background: #22262B; padding: 20px; border-radius: 8px; border-left: 4px solid #279AF1;">
-        <h3 style="margin: 0 0 10px 0; color: #F5F5F5;">${proj.titulo}</h3>
-        <p style="color: #AAA; font-size: 0.9rem; margin-bottom: 12px;">${proj.descricao || ''}</p>
-        <span style="background: #181B1F; color: #279AF1; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;">
-          Status: ${proj.status || 'Ativo'}
-        </span>
-      </div>
-    `).join('');
-
-  } catch (err) {
-    console.error("Erro ao carregar projetos do perfil:", err);
-    grid.innerHTML = `<p style="color: #BA3F1D;">Erro ao carregar projetos.</p>`;
   }
 }
 

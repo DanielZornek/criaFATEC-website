@@ -1,3 +1,4 @@
+// src/js/pages/feed.js
 import { supabase as supabaseClient } from '../supabase.js';
 
 export let postsCarregados = [];
@@ -112,6 +113,7 @@ async function carregarEventos() {
 
   eventosCarregados = events;
 
+  // Mural lateral limpo (apenas título e data, exatamente como antes)
   container.innerHTML = events.map(event => {
     const dataFormatada = event.data_evento ? new Date(event.data_evento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
 
