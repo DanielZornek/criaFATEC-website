@@ -1,5 +1,6 @@
 import { supabase } from '../supabase.js';
 import { postsCarregados } from './feed.js';
+import { obterUrlAvatar } from '../utils/avatar.js';
 
 // Abre o modal de detalhes do post (clicado na vitrine)
 export async function abrirModalDetalhes(postId) {
@@ -37,35 +38,74 @@ export async function abrirModalDetalhes(postId) {
     return;
   }
 
-  const media = (post.post_media && post.post_media.length > 0) ? post.post_media[0] : null;
-  let mediaHtml = '<div style="padding: 40px; background: #111; text-align: center; color: #666; border-radius: 8px;">Sem Mídia</div>';
+  const midias = (post.post_media || [])
+  .slice()
+  .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999));
 
-  if (media && media.midia_url) {
+let mediaHtml = '';
+
+if (midias.length === 0) {
+  mediaHtml = `
+    <div style="padding: 40px; background: #111; text-align: center; color: #666; border-radius: 8px;">
+      Sem Mídia
+    </div>`;
+} else {
+  mediaHtml = midias.map((media, index) => {
+    if (!media.midia_url) return '';
+
     if (media.tipo_midia === 'video') {
-      mediaHtml = `<video src="${media.midia_url}" controls autoplay style="width: 100%; max-height: 400px; border-radius: 8px;"></video>`;
-    } else if (media.tipo_midia === 'audio') {
-      mediaHtml = `
-        <div style="padding: 30px; background: #181B1F; border-radius: 8px; text-align: center;">
-          <p style="margin-bottom: 15px; color: #279AF1; font-weight: bold;">🎵 Arquivo de Áudio / Trilha Sonora</p>
-          <audio src="${media.midia_url}" controls style="width: 100%;"></audio>
-        </div>`;
-    } else {
-      mediaHtml = `<img src="${media.midia_url}" alt="${post.titulo || 'Mídia'}" style="width: 100%; max-height: 450px; object-fit: contain; border-radius: 8px; background: #111;" />`;
+      return `
+        <video
+          src="${media.midia_url}"
+          controls
+          preload="metadata"
+          style="width: 100%; max-height: 400px; border-radius: 8px; background: #111;">
+        </video>`;
     }
-  }
+
+    if (media.tipo_midia === 'audio') {
+      return `
+        <div style="padding: 25px; background: #181B1F; border-radius: 8px;">
+          <p style="margin: 0 0 15px; color: #279AF1; font-weight: bold;">
+            🎵 Áudio / Trilha Sonora ${index + 1}
+          </p>
+          <audio
+            src="${media.midia_url}"
+            controls
+            preload="metadata"
+            style="width: 100%;">
+          </audio>
+        </div>`;
+    }
+
+    return `
+      <img
+        src="${media.midia_url}"
+        alt="${post.titulo || 'Mídia'}"
+        loading="lazy"
+        style="width: 100%; max-height: 450px; object-fit: contain; border-radius: 8px; background: #111;">
+    `;
+  }).join('');
+}
 
   const autor = post.profiles || {};
   const autorNome = autor.nome || autor.username || 'Usuário FATEC';
   const autorUsername = autor.username ? `@${autor.username}` : '';
   const dataFormatada = new Date(post.created_at).toLocaleDateString('pt-BR');
-
+  const avatarAutor = await obterUrlAvatar(autor.avatar_url, post.user_id);
+  
   conteudoDiv.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 20px; color: #F5F5F5;">
       <div>${mediaHtml}</div>
       <div>
         <h2 style="margin: 0 0 10px 0; font-size: 1.5rem; color: #F5F5F5;">${post.titulo || 'Sem título'}</h2>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-          <img src="${autor.avatar_url || 'https://via.placeholder.com/40'}" alt="${autorNome}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;" />
+          <img
+            src="${avatarAutor}"
+            alt="${autorNome}"
+            onerror="this.onerror=null; this.src='src/assets/evento-default.jpg';"
+            style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;"
+          />
           <div>
             <p style="margin: 0; font-weight: bold; font-size: 0.95rem; color: #279AF1;">${autorNome} <span style="color: #888; font-weight: normal; font-size: 0.85rem;">${autorUsername}</span></p>
             <small style="color: #888;">Publicado em ${dataFormatada}</small>

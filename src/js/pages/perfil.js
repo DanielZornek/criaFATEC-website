@@ -1,5 +1,21 @@
 // src/js/pages/perfil.js
 import { supabase } from '../supabase.js';
+import { obterUrlAvatar } from '../utils/avatar.js';
+
+function obterAvatarPerfil(avatarUrl) {
+  if (!avatarUrl || avatarUrl.trim() === '') {
+    return 'src/assets/evento-default.jpg';
+  }
+
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://') || avatarUrl.startsWith('data:')) {
+    return avatarUrl;
+  }
+
+  const SUPABASE_URL = supabase.supabaseUrl;
+  const caminhoArquivo = avatarUrl.includes('/') ? avatarUrl : `avatars/${avatarUrl}`;
+
+  return `${SUPABASE_URL}/storage/v1/object/public/${caminhoArquivo}`;
+}
 
 export async function renderPerfilPage() {
   const container = document.getElementById('app');
@@ -65,6 +81,10 @@ export async function renderPerfilPage() {
   }
 
   const habilidadesStr = (profile.habilidades || []).join(', ');
+  const avatarFinal = await obterUrlAvatar(
+    profile.avatar_url,
+    profile.id
+  );
 
   container.innerHTML = `
     <div class="portfolio-container" style="max-width: 1100px; margin: 0 auto; padding: 20px 20px 60px 20px; color: #F5F5F5; min-height: 75vh;">
@@ -72,9 +92,10 @@ export async function renderPerfilPage() {
       <!-- CABEÇALHO DO PERFIL -->
       <div class="profile-header-card" style="background: #22262B; padding: 30px; border-radius: 12px; display: flex; gap: 25px; align-items: center; border-bottom: 3px solid #BA3F1D; flex-wrap: wrap;">
         <img 
-          src="${profile.avatar_url || 'https://via.placeholder.com/120'}" 
+          src="${avatarFinal}" 
           alt="${profile.nome || 'Avatar'}" 
           style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #279AF1;"
+          onerror="this.src='https://via.placeholder.com/120'"
         />
         
         <div style="flex: 1; min-width: 250px;">

@@ -1,0 +1,24 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "description": "https://danielzornek.github.io/criaFATEC-website/",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DanielZornek/criaFATEC-website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/DanielZornek/criaFATEC-website/issues"
+  },
+  "homepage": "https://github.com/DanielZornek/criaFATEC-website#readme",
+  "devDependencies": {
+    "jest": "^30.5.2"
+  }
+}

@@ -1,5 +1,6 @@
 // src/js/pages/eventoDetalhes.js
 import { supabase as supabaseClient } from '../supabase.js';
+import { extrairIdDaUrl, obterImagemEvento, formatarDataEvento } from '../utils/formatters.js';
 
 export async function renderizarEventoDetalhes() {
   const app = document.getElementById('app');
@@ -8,10 +9,8 @@ export async function renderizarEventoDetalhes() {
   // Altera a classe do app para um layout de página interna limpo
   app.className = 'container evento-detalhes-page';
   
-  // Pega o ID do evento da URL (ex: /#evento?id=uuid-do-evento ou hash params)
-  const hash = window.location.hash;
-  const params = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
-  const eventoId = params.get('id');
+  // Pega o ID do evento da URL usando a função importada do utils
+  const eventoId = extrairIdDaUrl(window.location.hash);
 
   if (!eventoId) {
     app.innerHTML = `
@@ -51,9 +50,9 @@ export async function renderizarEventoDetalhes() {
     return;
   }
 
-  // Define a imagem padrão caso o banco venha sem imagem_url
-  const imagemFinal = evento.imagem_url || 'src/assets/evento-default.jpg';
-  const dataFormatada = evento.data_evento ? new Date(evento.data_evento).toLocaleDateString('pt-BR', { timeZone: 'UTC', dateStyle: 'full' }) : 'Data a definir';
+  // Aplica os formatadores importados do utils
+  const imagemFinal = obterImagemEvento(evento.imagem_url);
+  const dataFormatada = formatarDataEvento(evento.data_evento);
   const categoria = evento.categoria || 'Geral';
 
   app.innerHTML = `

@@ -1,6 +1,7 @@
 // src/js/auth.js
 import { supabaseClient } from './supabase.js';
 import { navegarPara } from './router.js';
+import { obterUrlAvatar } from './utils/avatar.js';
 
 export async function verificarSessao() {
   const userArea = document.getElementById('user-area');
@@ -18,9 +19,18 @@ export async function verificarSessao() {
       .single();
 
     const nomeExibicao = profile ? (profile.nome || profile.username) : user.email;
-    const avatarImg = profile && profile.avatar_url 
-      ? `<img src="${profile.avatar_url}" class="nav-avatar" />` 
-      : `<div class="nav-avatar-placeholder"></div>`;
+    const avatarUrl = await obterUrlAvatar(
+      profile?.avatar_url,
+      user.id
+    );
+
+    const avatarImg = `
+      <img
+        src="${avatarUrl}"
+        class="nav-avatar"
+        onerror="this.onerror=null;this.src='src/assets/evento-default.jpg'"
+      />
+    `;
 
     userArea.innerHTML = `
       <div class="user-menu-container">

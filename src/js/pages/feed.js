@@ -1,5 +1,6 @@
 // src/js/pages/feed.js
 import { supabase as supabaseClient } from '../supabase.js';
+import { obterUrlAvatar } from '../utils/avatar.js';
 
 export let postsCarregados = [];
 export let eventosCarregados = [];
@@ -70,7 +71,12 @@ export async function carregarPosts() {
   }
 
   container.innerHTML = postsCarregados.map(post => {
-    const media = (post.post_media && post.post_media.length > 0) ? post.post_media[0] : null;
+    const midias = (post.post_media || [])
+      .slice()
+      .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999));
+
+    const media = midias.find(m => m.tipo_midia === 'imagem') || midias[0];
+
     let mediaTag = '<div style="padding: 20px; background: #111; text-align: center; color: #666; border-radius: 6px;">Sem Mídia</div>';
 
     if (media && media.midia_url) {
@@ -82,7 +88,6 @@ export async function carregarPosts() {
         mediaTag = `<img src="${media.midia_url}" alt="${post.titulo || 'Mídia'}" loading="lazy" />`;
       }
     }
-
     const autor = post.profiles || {};
     const autorNome = autor.nome || autor.username || 'Usuário';
 
