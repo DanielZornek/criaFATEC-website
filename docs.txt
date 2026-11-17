@@ -1,8 +1,27 @@
-conta para testes
+contas para testes
 
 escanor
 
 merlineuteamo
 escanoroescolhido.sol12@aluno.cps.sp.gov.br
+
+
+
+daniel debruyne
+
+daniel.silva72@aluno.cps.sp.gov.br
+flaviopresidente123
+
+==============================================================
+
+Rodar Servidor
+
+python3 -m http.server 8000
+
+
+
+
+
+
 
 sb_publishable_kT15zEwJ4CAId1qExsF2HA_V31vPaMf
