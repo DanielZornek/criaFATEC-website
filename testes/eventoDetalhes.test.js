@@ -25,5 +25,12 @@ describe('Módulo Web - Funções Utilitárias de Eventos', () => {
   test('Deve retornar "Data a definir" quando não houver data informada', () => {
     expect(formatarDataEvento(null)).toBe('Data a definir');
   });
+  test('Deve retornar null quando a URL não possuir ID', () => {
+    expect(extrairIdDaUrl('#evento?nome=teste')).toBeNull();
+  });
+
+  test('Deve retornar a imagem padrão quando a URL contiver apenas espaços', () => {
+    expect(obterImagemEvento('   ')).toBe('src/assets/evento-default.jpg');
+  });
 
 });
